@@ -1,28 +1,28 @@
 import * as React from 'react';
 import styled from 'styled-components';
-import Advert from './Advert';
+import { Advert } from './Advert';
 import { MdAdd } from 'react-icons/md';
 import { AdvertData } from './type';
 
 
 interface Props {
     items: AdvertData[];
-    editItems(data: AdvertData[]): void;
-    showEditor(value: boolean): void;
-    setIndex(index: number): void;
+    onEdit(data: AdvertData[]): void;
+    showEditor(): void;
+    onIndexChange(index: number): void;
 }
 
-const List: React.FunctionComponent<Props> = (props) => {
+export const List = (props: Props) => {
 
     const removeItem = (index: number) => {
         const items = [...props.items];
         items.splice(index, 1);
-        props.editItems(items);
+        props.onEdit(items);
     }
 
     const editItem = (index: number) => {
-        props.setIndex(index);
-        props.showEditor(true);
+        props.onIndexChange(index);
+        props.showEditor();
     }
 
     return (
@@ -32,13 +32,13 @@ const List: React.FunctionComponent<Props> = (props) => {
                     key={index}
                     data={item}
                     index={index}
-                    removeItem={removeItem}
-                    editItem={editItem}
+                    onDelete={removeItem}
+                    onEdit={editItem}
                 />
             )}
             <AddItem>
                 <div
-                    onClick={() => props.showEditor(true)}
+                    onClick={props.showEditor}
                 >
                     <MdAdd
                         color='white'
@@ -48,9 +48,7 @@ const List: React.FunctionComponent<Props> = (props) => {
             </AddItem>
         </ListStyled>
     )
-}   
-
-export default List;
+}
 
 
 /** styling */
@@ -70,7 +68,7 @@ const AddItem = styled.div`
     width: 25em;
     height: 20em;
 
-    div {
+    & > div {
         display: flex;
         justify-content: center;
         align-items: center;

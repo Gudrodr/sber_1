@@ -6,16 +6,23 @@ import { AdvertData } from './type';
 interface Props {
     data: AdvertData;
     index: number;
-    removeItem(index: number): void;
-    editItem(index: number): void;
+    onDelete(index: number): void;
+    onEdit(index: number): void;
 }
 
-const Advert: React.FunctionComponent<Props> = (props) => {
+interface SecondPartProps {
+    description: string;
+}
+
+export const Advert = (props: Props) => {
+
+    const onDelete = () => props.onDelete(props.index);
+    const onEdit = () => props.onEdit(props.index);
 
     return (
         <AdvertStyled>
-            <Part1>
-                <Block>
+            <FirstPart>
+                <MainInfo>
                     <Title>{props.data.title}</Title>
                     <ContentPart>
                         <span>Телефон</span>
@@ -27,17 +34,17 @@ const Advert: React.FunctionComponent<Props> = (props) => {
                             <p>{props.data.city}</p>
                         </ContentPart>
                     }
-                </Block>
+                </MainInfo>
                 <Picture>
-                    {props.data.picture !== undefined && props.data.picture !== '' &&
+                    {props.data.picture !== undefined && props.data.picture !== '' ?
                         <img
                             src={JSON.parse(props.data.picture)}
-                        /> ||
+                        /> :
                         <div>нет изображения</div>
                     }
                 </Picture>
-            </Part1>
-            <Part2
+            </FirstPart>
+            <SecondPart
                 description={props.data.description}
             >
                 {props.data.description !== '' && 
@@ -46,24 +53,22 @@ const Advert: React.FunctionComponent<Props> = (props) => {
                         <p>{props.data.description}</p>
                     </ContentPart>
                 }
-                <Buttons>
+                <ButtonsArea>
                     <button
-                        onClick={() => props.removeItem(props.index)}
+                        onClick={onDelete}
                     >
                         <MdDelete />
                     </button>
                     <button
-                        onClick={() => props.editItem(props.index)}
+                        onClick={onEdit}
                     >
                         <MdModeEdit />
                     </button>
-                </Buttons>
-            </Part2>
+                </ButtonsArea>
+            </SecondPart>
         </AdvertStyled>
     )
 }
-
-export default Advert;
 
 
 /** styling */
@@ -82,23 +87,23 @@ const AdvertStyled = styled.div`
     box-shadow: 0 0 10px 0 gray;
 `;
 
-const Part1 = styled.div`
+const FirstPart = styled.div`
     display: flex;
     justify-content: space-between;
     width: 100%;
     margin-bottom: 1em;
 `;
 
-const Block = styled.div`
+const MainInfo = styled.div`
     display: flex;
     flex-direction: column;
     width: 50%;
 `;
 
-const Part2 = styled.div`
+const SecondPart = styled.div<SecondPartProps>`
     display: flex;
     flex-direction: column;
-    justify-content: ${(props: {description: string}) => props.description === '' ? 'flex-end' : 'space-between'}
+    justify-content: ${props => props.description === '' ? 'flex-end' : 'space-between'}
     width: 100%;
 `;
 
@@ -111,13 +116,13 @@ const ContentPart = styled.div`
     display: flex;
     flex-direction: column;
 
-    span {
+    & > span {
         font-size: .8em;
         padding-bottom: .4em;
         opacity: .7;
     }
 
-    p {
+    & > p {
         margin: 0 0 1em .5em;
     }
 `;
@@ -126,13 +131,13 @@ const Picture = styled.div`
     width: 10em;
     height: 10em;
 
-    img {
+    & > img {
         max-width: 100%;
         max-height: 100%;
         border-radius: .3em;
     }
 
-    div {
+    & > div {
         display: flex;
         justify-content: center;
         align-items: center;
@@ -143,19 +148,17 @@ const Picture = styled.div`
     }
 `;
 
-const Buttons = styled.div`
-    line-height: 2em;
-
+const ButtonsArea = styled.div`
     display: flex;
     justify-content: space-between;
     width: 100%;
     height: 2em;
     margin-top: 1em;
 
-    button {
-        display: flex;
-        justify-content: center;
-        align-items: center;
+    & > button {
+        width: 2em;
+        height: 2em;
+        padding: .4em;
         border-radius: .2em;
         cursor: pointer;
     }

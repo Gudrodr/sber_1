@@ -3,13 +3,19 @@ import styled from 'styled-components';
 import { cityList } from '../citylist';
 import { MdClose } from 'react-icons/md';
 import { AdvertData } from './type';
+import { PHONE_REGEXP } from '..';
 
 
 interface Props {
     index: number | undefined;
     items: AdvertData[];
-    editItems(data: AdvertData[]): void;
-    showEditor(value: boolean): void;
+    onEdit(data: AdvertData[]): void;
+    hideEditor(): void;
+}
+
+interface RowProps {
+    invalid?: boolean;
+    checked?: boolean;
 }
 
 const defaultData = {
@@ -20,7 +26,7 @@ const defaultData = {
     picture: ''
 }
 
-const Editor: React.FunctionComponent<Props> = (props) => {
+export const Editor = (props: Props) => {
     const data = props.index === undefined ? defaultData : props.items[props.index];
 
     const [title, setTitle] = React.useState(data.title);
@@ -28,28 +34,32 @@ const Editor: React.FunctionComponent<Props> = (props) => {
     const [phone, setPhone] = React.useState(data.phone);
     const [city, setCity] = React.useState(data.city);
     const [picture, setPicture] = React.useState(data.picture);
-    const [valid, setValid] = React.useState({title: false, phone: false, checked: false});
+    const [validity, setValidity] = React.useState({title: false, phone: false, checked: false});
 
-    const checkFields = (e: React.FormEvent) => {
+    const checkFields =(e: React.FormEvent) => {
         e.preventDefault();
 
-        const validPhone = phone.match(/^(\+7|7|8)?[\s\-]?\(?[489][0-9]{2}\)?[\s\-]?[0-9]{3}[\s\-]?[0-9]{2}[\s\-]?[0-9]{2}$/gm);
+        const validPhone = phone.match(PHONE_REGEXP);
         const validTitle = title !== '';
 
-        setValid({title: validTitle, phone: !!validPhone, checked: true});
-    }
+        setValidity({title: validTitle, phone: !!validPhone, checked: true});
+    };
 
     const loadFile = (e) => {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-            const dataurl = JSON.stringify(reader.result);
-            setPicture(dataurl);
+        try {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                const dataurl = JSON.stringify(reader.result);
+                setPicture(dataurl);
+            }
+            reader.readAsDataURL(e.target.files[0]);
+        } catch (err) {
+            console.error(err);
         }
-        reader.readAsDataURL(e.target.files[0]);
     }
     
     React.useEffect(() => {
-        if (!valid.title || !valid.phone) return;
+        if (!validity.title || !validity.phone) return;
 
         const localData: AdvertData[] = [...props.items];
         const newData: AdvertData = {
@@ -66,25 +76,25 @@ const Editor: React.FunctionComponent<Props> = (props) => {
             localData.push(newData);
         }
 
-        props.editItems(localData);
-        props.showEditor(false);
+        props.onEdit(localData);
+        props.hideEditor();
         
-    }, [valid])
+    }, [validity])
 
     return (
         <SubLayer
-            onClick={() => props.showEditor(false)}
+            onClick={props.hideEditor}
         >
             <EditorStyled
                 onSubmit={e => checkFields(e)}
                 onClick={e => e.stopPropagation()}
             >
                 <Close 
-                    onClick={() => props.showEditor(false)}
+                    onClick={props.hideEditor}
                 >
                     <MdClose />
                 </Close>
-                <Row invalid={!valid.title} checked={valid.checked}>
+                <Row invalid={!validity.title} checked={validity.checked}>
                     <label>Название</label>
                     <input
                         value={title}
@@ -104,7 +114,7 @@ const Editor: React.FunctionComponent<Props> = (props) => {
                         rows={5}
                     />
                 </Row>
-                <Row invalid={!valid.phone} checked={valid.checked}>
+                <Row invalid={!validity.phone} checked={validity.checked}>
                     <label>Номер телефона</label>
                     <input
                         value={phone}
@@ -119,13 +129,13 @@ const Editor: React.FunctionComponent<Props> = (props) => {
                         defaultValue={city === '' ? 'Москва' : city}
                         onChange={e => setCity(e.target.value)}
                     >
-                        {cityList.sort().map(item => 
+                        {[...cityList].sort().map(item => 
                             <option key={item}>{item}</option>
                         )}
                     </Select>
                 </Row>
                 <Row>
-                    {picture !== undefined && picture !== '' &&
+                    {picture !== undefined && picture !== '' ?
                         <Picture>
                             <PictureRemove
                                 onClick={() => setPicture('')}
@@ -133,7 +143,7 @@ const Editor: React.FunctionComponent<Props> = (props) => {
                             <img
                                 src={JSON.parse(picture)}
                             />
-                        </Picture> ||
+                        </Picture> :
                         <>
                             <label>Изображение</label>
                             <FileInput 
@@ -152,8 +162,6 @@ const Editor: React.FunctionComponent<Props> = (props) => {
         </SubLayer>
     )
 }
-
-export default Editor;
 
 
 /** styling */
@@ -196,16 +204,16 @@ const Close = styled.span`
     cursor: pointer;
 `;
 
-const Row = styled.div`
+const Row = styled.div<RowProps>`
     display: flex;
     flex-direction: column;
     width: 100%;
 
-    input, textarea, select {
+    & > input, textarea, select {
         padding: .5em 0 .5em 0;
         background-color: white;
         border: none;
-        border-bottom: ${(props: {invalid?: boolean, checked?: boolean}) => props.checked && props.invalid ? '1px solid red' : '1px solid lightgray'};
+        border-bottom: ${props => props.checked && props.invalid ? '1px solid red' : '1px solid lightgray'};
         margin: .5em 0 1.5em 0;
 
         ::placeholder {
@@ -228,7 +236,7 @@ const Picture = styled.div`
     width: 10em;
     height: 10em;
 
-    img {
+    & > img {
         max-width: 100%;
         max-height: 100%;
         border-radius: .3em;

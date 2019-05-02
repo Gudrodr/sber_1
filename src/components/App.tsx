@@ -1,46 +1,49 @@
 import * as React from 'react';
 import styled from 'styled-components';
-import List from './List';
-import Editor from './Editor';
-import Advert from './Advert';
+import { List } from './List';
+import { Editor } from './Editor';
 import { AdvertData } from './type';
+import { STORAGE_KEY } from '..';
 
 
-const App: React.FunctionComponent = (props) => {
-    const [showEditor, setShowEditor] = React.useState<boolean>(false);
-    const [items, setItems] = React.useState<AdvertData[]>([]);
+export const App = (props) => {
+    const [editorStatus, setEditorStatus] = React.useState(false);
+    const [items, setItems] = React.useState<AdvertData[]>(JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'));
     const [itemIndex, setItemIndex] = React.useState<undefined | number>(undefined);
     
-    const editItems = (data: AdvertData[]) => {
+    const editItems = React.useCallback((data: AdvertData[]) => {
         setItems(data);
-        localStorage.setItem('adverts', JSON.stringify(data));
-    }
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    }, [items]);
 
-    React.useEffect(() => {
-        setItems(JSON.parse(localStorage.getItem('adverts') || '[]'));
-    }, []);
+    const hideEditor = React.useCallback(() => {
+        setEditorStatus(false);
+        setItemIndex(undefined);
+    }, [editorStatus]);
+
+    const showEditor = React.useCallback(() => {
+        setEditorStatus(true);
+    }, [editorStatus]);
         
     return (
         <Application>
             <List
                 items={items}
-                editItems={editItems}
-                showEditor={setShowEditor}
-                setIndex={setItemIndex}
+                onEdit={editItems}
+                showEditor={showEditor}
+                onIndexChange={setItemIndex}
             />
-            {showEditor &&
+            {editorStatus &&
                 <Editor
                     index={itemIndex}
                     items={items}
-                    editItems={editItems}
-                    showEditor={setShowEditor}
+                    onEdit={editItems}
+                    hideEditor={hideEditor}
                 />
             }
         </Application>
     )
 }
-
-export default App;
 
 
 /** styling */
@@ -51,7 +54,7 @@ const Application = styled.div`
 
     position: relative;
 
-    height: 100vh;
+    min-height: 100vh;
     width: 100vw;
     box-sizing: border-box;
 
