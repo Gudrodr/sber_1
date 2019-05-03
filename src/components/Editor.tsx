@@ -22,7 +22,7 @@ const defaultData = {
     title: '',
     description: '',
     phone: '',
-    city: '',
+    city: 'Москва',
     picture: ''
 }
 
@@ -126,7 +126,7 @@ export const Editor = (props: Props) => {
                 <Row>
                     <label>Город</label>
                     <Select
-                        defaultValue={city === '' ? 'Москва' : city}
+                        defaultValue={city}
                         onChange={e => setCity(e.target.value)}
                     >
                         {[...cityList].sort().map(item => 
